@@ -1,0 +1,28 @@
+# Test variable permanency across chunks
+
+Define some variable and test its permanency within one chunk.
+
+```{Mathematica}
+var = 2
+var + 2
+var
+```
+
+And now test if it remains through another chunk.
+
+```{Mathematica}
+var
+var = var^var
+```
+
+Even if the variable isn't even used.
+
+```{Mathematica}
+Range[10]
+```
+
+Is it still there?
+
+```{Mathematica}
+var
+```
