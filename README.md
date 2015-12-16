@@ -56,7 +56,7 @@ complete. Locally, the figures are stored in the <your_file>-figures/ folder.)
 Plot[x^var, {x, 0, 10}]
 ```
 
-![]("README-figures/chunk-2-1.jpg")
+![]("https://github.com/Leockard/Mathdown/blob/master/README-figures/chunk-2-1.jpg")
 
 
 
