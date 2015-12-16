@@ -57,6 +57,22 @@ def pretty_up_output(out):
     """
     return ["\n\n" + SEP + o for o in out]
 
+def weave_output(chunks, outputs):
+    """Pastes output chunks immediately after the corresponding input
+    chunk. Returns one string containing both input and output.
+    @param chunks: all chunks (text and code).
+    @param outputs: output chunks.
+    """
+    i = 0
+    j = 0
+    while j < len(chunks):
+        if is_code_chunk(chunks[j]):
+            chunks.insert(j + 1, outputs[i])
+            i += 1
+        j += 1
+
+    return SEP.join(chunks)
+
 
 #################################
 ### INPUT CHUNK PARSING FUNCTIONS
@@ -114,30 +130,25 @@ def process_all_chunks(chunk_list):
 
     return output_list
 
+def pretty_up_code(md):
+    """Processes the markdown and sets it up for pretty printing.
+    @param md: raw markdown.
+    """
+    # delete any empty outputs
+    md = md.replace(SEP + "\n" + SEP, "")
+    return md
+    
 def make_markdown(text):
     """Converts the contents of a .Mmd file into Markdown.
     @param text: string read from a .Mmd file.
     """
-    # get and process the code chunks
     chunks = mmd.split(SEP)
     outputs = process_all_chunks([c for c in chunks if is_code_chunk(c)])
     outputs = pretty_up_output(outputs)
-    
-    # add output to original Markdown
-    # each output goes immediately after the corresponding input chunk
-    i = 0
-    j = 0
-    while j < len(chunks):
-        if is_code_chunk(chunks[j]):
-            chunks.insert(j + 1, outputs[i])
-            i += 1
-        j += 1
+    markdown = weave_output(chunks, outputs)
+    markdown = pretty_up_code(markdown)
 
-    # delete any empty outputs
-    code = SEP.join(chunks)
-    code = code.replace(SEP + "\n" + SEP, "")
-    
-    return code
+    return markdown
 
 
 ##################################
