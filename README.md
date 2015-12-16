@@ -23,8 +23,8 @@ This README.md file was generated from README.Mmd, also available in the repo.
 
 ```{Mathematica}
 Print["This is a chunk."]
-var = 2;
 Range[10]
+var = 2;
 ```
 
 ```
@@ -37,17 +37,26 @@ Mathdown retains variables across chunks:
 
 
 ```{Mathematica}
-Print["This is a second chunk."]
 var
-Do[var = var^var, {2}];
-var
+var = 3
 ```
 
 ```
-"This is a second chunk."
 2
-256
+3
 ```
+
+
+Mathdown calls Export[] on Graphics[] output to convert them to .jpg and save them in a
+separate folder:
+
+
+```{Mathematica}
+Plot[x^var, {x, 0, 10}]
+```
+
+![]("README-figures/chunk-2-1.jpg")
+
 
 
 
