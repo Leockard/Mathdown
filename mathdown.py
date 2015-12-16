@@ -1,10 +1,13 @@
 # main.py
 # Convert a .Mmd file into regular Markdown.
 
+import re
+
 code_flag_begin = "{Mathematica"
 chunk_header = "Mmd-chunk-begin-id-"
 NCHUNKS = 0
 SEP = "```"
+GRAPHICS_DIR = "figures"
 
 #######################
 ### AUXILIARY FUNCTIONS
@@ -35,6 +38,28 @@ def make_out_name(in_name):
     name, ext = input_name.split(".")[:2]
     return name + "." + ext[1:]
 
+def create_figures_dir(title):
+    """Checks if the figures dir is already created. If it isn't, create it and return
+    True. If it is, immedately return True. Only returns False when creating the directory
+    causes an error.
+    """
+    import os
+    figs_dir = os.getcwd() + "/" + title + "-" + GRAPHICS_DIR
+    try:
+        if not os.path.exists(figs_dir):
+            os.makedirs(figs_dir)
+            return True
+    except OSError:
+        return False
+
+def make_image_link(filename):
+    """Returns the Markdown code that embeds the image <filename>."""
+    return "![](" + filename + ")"
+
+def is_link(exp):
+    """Returns True if the expression is a Markdown link, i.e., if it begins with a !"""
+    return exp.strip().find("!") == 0
+
 
 ##################################
 ### OUTPUT CHUNK PARSING FUNCTIONS
@@ -45,7 +70,6 @@ def parse_raw_output(out):
     one with the ouput of each chunk.
     @param out: the raw output returned by executing the code in WolframKernel.
     """
-    import re
     out_chunks = re.split("\"" + chunk_header + ".*\"", out)
     out_chunks = filter(None, out_chunks)
 
@@ -55,7 +79,7 @@ def pretty_up_output(out):
     """Processes the output chunk list into a suitable format for embedding into the .md file.
     @param out: output chunk list.
     """
-    return ["\n\n" + SEP + o for o in out]
+    return [is_link(o) and o or ("\n" + SEP + o + SEP) for o in out]
 
 def weave_output(chunks, outputs):
     """Pastes output chunks immediately after the corresponding input
@@ -67,11 +91,47 @@ def weave_output(chunks, outputs):
     j = 0
     while j < len(chunks):
         if is_code_chunk(chunks[j]):
+            chunks[j] = SEP + chunks[j] + SEP
             chunks.insert(j + 1, outputs[i])
             i += 1
         j += 1
 
-    return SEP.join(chunks)
+    return "\n".join(chunks)
+
+def get_graphics(output):
+    """Returns a list of Graphics[] expressions found in output.
+    @param output: output string.
+    """
+    # CAUTION: we're assuming that WolframKernel outputs Graphics[] on a single line (no
+    # newline) and that it separates multiple Graphics[] by at least one newline.
+    return re.findall("(Graphics\[.*])", output)
+
+def process_all_graphics(outputs, title):
+    """Looks for Graphics[] expressions inside each output chunk and replaces them with an
+    embedded image.
+    @param outputs: list of output chunks.
+    """
+    return [process_graphics(outputs[i], title, "chunk-" + str(i)) for i in range(len(outputs))]
+
+def process_graphics(output, title, fileprefix, ext="jpg"):
+    """Processes Graphics[] objects in one output chunk. Calls Export["fileprefix_i.ext",
+    graphics], where graphics is extracted from the output chunk and i is an integer
+    denoting the order in which the graphics object appears in the output.
+    @param output: output string.
+    @param fileprefix: the file to save the image to.
+    """
+    def make_command(g, i):
+        return "Export[FileNameJoin[{\"" + title + "-" + GRAPHICS_DIR + "\", \"" + fileprefix + "-" + str(i) + "."+ext + "\"}], " + g + "]"
+    
+    figure_dir = create_figures_dir(title)
+    i = 1;
+    for g in get_graphics(output):
+        # WE NEED ERROR HANDLING HERE!!!
+        outfile = execute_code(make_command(g, i))
+        output = output.replace(g, make_image_link(outfile.rstrip()))
+        i += 1
+
+    return output
 
 
 #################################
@@ -114,7 +174,7 @@ def execute_code(code):
     output = subprocess.check_output(["WolframKernel", "-noprompt"], stdin = temp.file)
     temp.close()
 
-    return parse_raw_output(output)
+    return output
 
 
 ##################################
@@ -126,7 +186,7 @@ def process_all_chunks(chunk_list):
     @param <chunk_list>: a list of strings.
     """
     opt_list = [parse_chunk_options(c) for c in chunk_list]
-    output_list = execute_code(generate_code(chunk_list, opt_list))
+    output_list = parse_raw_output(execute_code(generate_code(chunk_list, opt_list)))
 
     return output_list
 
@@ -138,12 +198,14 @@ def pretty_up_code(md):
     md = md.replace(SEP + "\n" + SEP, "")
     return md
     
-def make_markdown(text):
+def make_markdown(text, title=""):
     """Converts the contents of a .Mmd file into Markdown.
     @param text: string read from a .Mmd file.
+    @param title: string to be appended to the figures directory, if any.
     """
     chunks = mmd.split(SEP)
     outputs = process_all_chunks([c for c in chunks if is_code_chunk(c)])
+    outputs = process_all_graphics(outputs, title)
     outputs = pretty_up_output(outputs)
     markdown = weave_output(chunks, outputs)
     markdown = pretty_up_code(markdown)
@@ -174,7 +236,7 @@ if __name__ == "__main__":
 
     # make magic!
     output_name = make_out_name(input_name)
-    markdown = make_markdown(mmd)
+    markdown = make_markdown(mmd, input_name.split(".")[0])
 
     # boilerplate file writing
     try: 
