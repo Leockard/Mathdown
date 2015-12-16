@@ -1,0 +1,31 @@
+# Test some basic outputs
+
+This chunk tests some basic Markdown features as well as Mathematica numeric outputs.
+Implicitly, we're also testing for correct whitespace.
+
+Such as integers and lists,
+
+```{Mathematica}
+Range[10]
+```
+
+big integers, decimals, scientific notation,
+
+```{Mathematica}
+16^4^4
+N[Pi, 30]
+Pi/10000000000 // N
+```
+
+fractions, exponents,
+
+```{Mathematica}
+(Sqrt[5] + 1)/2
+Integrate[x^2, x]
+```
+
+and more complicated expressions
+
+```{Mathematica}
+\[Integral]x Sqrt[x^3 - 1] \[DifferentialD] x
+```
