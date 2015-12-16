@@ -104,9 +104,13 @@ def get_graphics(output):
     """Returns a list of Graphics[] expressions found in output.
     @param output: output string.
     """
-    # CAUTION: we're assuming that WolframKernel outputs Graphics[] on a single line (no
-    # newline) and that it separates multiple Graphics[] by at least one newline.
-    return re.findall("(Graphics\[.*])", output)
+    # if we do
+    #     re.findall("(Graphics\[.*])", output)
+    # directly over output, we would have to assume that WolframKernel outputs each Graphics[]
+    # on a single line (no newline) and that it separates multiple Graphics[] by at least one
+    # newline. To avoid that assumption, we add a newline in front of each Graphics[]
+    with_newlines = output.replace("Graphics[", "\nGraphics[")
+    return re.findall("(Graphics\[.*])", with_newlines)
 
 def process_all_graphics(outputs, title):
     """Looks for Graphics[] expressions inside each output chunk and replaces them with an
