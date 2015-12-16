@@ -22,3 +22,15 @@ Test when Graphics[] is not the sole expression in the output.
 ```{Mathematica}
 Plot[Sin[x^#], {x, 0, 10}] & /@ {1,2,3}
 ```
+
+## Other types of plots
+
+Here be any other type of plot that outputs a Graphics[].
+
+```{Mathematica}
+ParametricPlot[{Cosh[t] + 2 Sinh[t], 2 Cosh[t] + Sinh[t]}, {t, -1, 1}]
+```
+
+```{Mathematica}
+(* Plot3D[{Cosh[x]/Sinh[y], 2 Cosh[x] Sinh[y]}, {x, -1, 1}, {y, -1, 1}] *)
+```

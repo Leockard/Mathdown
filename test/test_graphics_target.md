@@ -31,3 +31,19 @@ Plot[Sin[x^#], {x, 0, 10}] & /@ {1,2,3}
 ```
 {![]("test_graphics-figures/chunk-2-1.jpg"), ![]("test_graphics-figures/chunk-2-2.jpg"), ![]("test_graphics-figures/chunk-2-3.jpg")}
 ```
+
+## Other types of plots
+
+Here be any other type of plot that outputs a Graphics[].
+
+```{Mathematica}
+ParametricPlot[{Cosh[t] + 2 Sinh[t], 2 Cosh[t] + Sinh[t]}, {t, -1, 1}]
+```
+![]("test_graphics-figures/chunk-3-1.jpg")
+
+
+```{Mathematica}
+(* Plot3D[{Cosh[x]/Sinh[y], 2 Cosh[x] Sinh[y]}, {x, -1, 1}, {y, -1, 1}] *)
+```
+
+
