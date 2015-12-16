@@ -20,6 +20,7 @@ line, and end with a line containing only three backquotes.
 
 ### Example
 This README.md file was generated from README.Mmd, also available in the repo.
+
 ```{Mathematica}
 Print["This is a chunk."]
 var = 2;
@@ -31,7 +32,9 @@ Range[10]
 {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 ```
 
+
 Mathdown retains variables across chunks:
+
 
 ```{Mathematica}
 Print["This is a second chunk."]
@@ -45,6 +48,7 @@ var
 2
 256
 ```
+
 
 
 ### License
