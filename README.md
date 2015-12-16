@@ -48,7 +48,8 @@ var = 3
 
 
 Mathdown calls Export[] on Graphics[] output to convert them to .jpg and save them in a
-separate folder:
+separate folder. (Here we manually insert the image so that this README is
+complete. Locally, the figures are stored in the <your_file>-figures/ folder.)
 
 
 ```{Mathematica}
