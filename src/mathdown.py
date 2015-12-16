@@ -79,7 +79,9 @@ def pretty_up_output(out):
     """Processes the output chunk list into a suitable format for embedding into the .md file.
     @param out: output chunk list.
     """
-    return [is_link(o) and o or ("\n" + SEP + o + SEP) for o in out]
+    # the "\n" at the beginning is essential since we will then remove empty code chunks
+    # i.e., we need the input and ouptut chunks to be separated by at least one empty line
+    return [is_link(o) and o or ("\n\n" + SEP + o + SEP) for o in out]
 
 def weave_output(chunks, outputs):
     """Pastes output chunks immediately after the corresponding input
@@ -96,7 +98,7 @@ def weave_output(chunks, outputs):
             i += 1
         j += 1
 
-    return "\n".join(chunks)
+    return "".join(chunks)
 
 def get_graphics(output):
     """Returns a list of Graphics[] expressions found in output.
