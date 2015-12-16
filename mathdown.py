@@ -120,8 +120,8 @@ def make_markdown(text):
     """
     # get and process the code chunks
     chunks = mmd.split(SEP)
-    output = process_all_chunks([c for c in chunks if is_code_chunk(c)])
-    output = pretty_up_output(output)
+    outputs = process_all_chunks([c for c in chunks if is_code_chunk(c)])
+    outputs = pretty_up_output(outputs)
     
     # add output to original Markdown
     # each output goes immediately after the corresponding input chunk
@@ -129,11 +129,15 @@ def make_markdown(text):
     j = 0
     while j < len(chunks):
         if is_code_chunk(chunks[j]):
-            chunks.insert(j + 1, output[i])
+            chunks.insert(j + 1, outputs[i])
             i += 1
         j += 1
 
-    return SEP.join(chunks)
+    # delete any empty outputs
+    code = SEP.join(chunks)
+    code = code.replace(SEP + "\n" + SEP, "")
+    
+    return code
 
 
 ##################################
