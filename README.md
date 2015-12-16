@@ -56,9 +56,7 @@ complete. Locally, the figures are stored in the your_file-figures/ folder.)
 Plot[x^var, {x, 0, 10}]
 ```
 
-```
-{![](README-figures/chunk-2-1.jpg?raw=True)}
-```
+![](README-figures/chunk-2-1.jpg?raw=True)
 
 
 ### License
