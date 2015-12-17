@@ -71,7 +71,7 @@ def parse_raw_output(out):
     @param out: the raw output returned by executing the code in WolframKernel.
     """
     out_chunks = re.split("\"" + chunk_header + ".*\"", out)
-    out_chunks = filter(None, out_chunks)
+    out_chunks = list(filter(None, out_chunks))
 
     return out_chunks
 
@@ -170,14 +170,16 @@ def execute_code(code):
     """
     import tempfile
     import subprocess
-    
+
     # create a temp file with the code we need to run
     temp = tempfile.NamedTemporaryFile()
-    temp.write(code)
+    temp.write(bytes(code, 'UTF-8'))
     temp.seek(0)
 
     # execute code with WolframKernel
+    # check_output() returns a bytes object, need to cast to string
     output = subprocess.check_output(["WolframKernel", "-noprompt"], stdin = temp.file)
+    output = output.decode("utf-8")
     temp.close()
 
     return output
@@ -228,7 +230,7 @@ if __name__ == "__main__":
 
     # check for necessary file name
     if len(argv) < 2:
-        print "A .Mmd file is needed."
+        print("A .Mmd file is needed.")
         exit(1)
 
     # boilerplate file opening
@@ -237,7 +239,7 @@ if __name__ == "__main__":
         with open(input_name, 'r') as f:
             mmd = f.read()
     except IOError:
-        print "No such file or directory: " + input_name
+        print("No such file or directory: " + input_name)
         exit(1)
 
     # make magic!
@@ -249,7 +251,7 @@ if __name__ == "__main__":
         with open(output_name, 'w') as f:
             f.write(markdown)
     except IOError:
-        print "Couldn't create file: " + output_name
+        print("Couldn't create file: " + output_name)
         exit(1)
 
     exit(0)

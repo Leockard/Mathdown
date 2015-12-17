@@ -12,17 +12,17 @@ if __name__ == "__main__":
 
     for test in tests:
         # run test
-        print "Testing " + test + "..."
-        retcode = call(["python", "../src/mathdown.py", test])
+        print("Testing " + test + "...")
+        retcode = call(["python3", "../src/mathdown.py", test])
         
         if retcode:
-            print "ERROR."
+            print("ERROR.")
             exit(1)
 
         # diff it to _target.md
         md_file = test.split(".")[0] + ".md"
         target = test.split(".")[0] + "_target.md"
         diff = call(["diff", md_file, target])
-        print (not diff) and "Pass." or "FAIL."
+        print((not diff) and "Pass." or "FAIL.")
 
     
