@@ -8,6 +8,8 @@ chunk_header = "Mmd-chunk-begin-id-"
 NCHUNKS = 0
 SEP = "```"
 GRAPHICS_DIR = "figures"
+FIGURES_DIR_EXISTS = False
+
 
 #######################
 ### AUXILIARY FUNCTIONS
@@ -43,11 +45,19 @@ def create_figures_dir(title):
     True. If it is, immedately return True. Only returns False when creating the directory
     causes an error.
     """
+    global FIGURES_DIR_EXISTS
+    if FIGURES_DIR_EXISTS:
+        return True
+    
     import os
     figs_dir = os.getcwd() + "/" + title + "-" + GRAPHICS_DIR
     try:
         if not os.path.exists(figs_dir):
             os.makedirs(figs_dir)
+            FIGURES_DIR_EXISTS = True
+            return True
+        else:
+            FIGURES_DIR_EXISTS = True
             return True
     except OSError:
         return False
@@ -129,9 +139,13 @@ def process_graphics(output, title, fileprefix, ext="jpg"):
     def make_command(g, i):
         return "Export[FileNameJoin[{\"" + title + "-" + GRAPHICS_DIR + "\", \"" + fileprefix + "-" + str(i) + "."+ext + "\"}], " + g + "]"
     
-    figure_dir = create_figures_dir(title)
     i = 1;
     for g in get_graphics(output):
+        # create_figures_dir() will only create the directory only the first time it's called
+        # we call it inside the loop because we only want to create the dir in case there's
+        # a graphic to export
+        figure_dir = create_figures_dir(title)
+        
         # WE NEED ERROR HANDLING HERE!!!
         outfile = execute_code(make_command(g, i))
         output = output.replace(g, make_image_link(outfile.rstrip()))
