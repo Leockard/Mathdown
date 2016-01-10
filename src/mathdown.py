@@ -65,7 +65,7 @@ class CodeChunk(Chunk):
     executable Mathematica code form this chunk.
     """
 
-    graphics_regex = re.compile(r"(.*?Plot|Graphics)\[(.*)\]")
+    graphics_regex = re.compile(r"(.*?Plot(3D)?|Graphics)\[(.*)\]")
     """Regex used to determine if a particular line of Mathematica code will output a Graphics object."""
 
     code_regex = re.compile(r"\s*```{Mathematica.*?}\s*(.*)\s*```", re.DOTALL)
@@ -130,7 +130,7 @@ class CodeChunk(Chunk):
             # In this way, all figures are automatically saved instead of displayed.
             if re.match(self.graphics_regex, self._code):
                 self.has_graphics = True
-                self._code = re.sub(self.graphics_regex, r'Export["' + self.document.graphics_dirname + "chunk-" + str(self.index) + "<CHANGE_ME>" + ".jpg" + r'", \1[\2]]', self._code)
+                self._code = re.sub(self.graphics_regex, r'Export["' + self.document.graphics_dirname + "chunk-" + str(self.index) + "<CHANGE_ME>" + ".jpg" + r'", \1[\3]]', self._code)
 
                 # We left a <CHANGE_ME> flag in place. Now, we replace it iteratively with
                 # the corresponding ordinal number. (We can't do that in a single re.sub call)

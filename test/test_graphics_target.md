@@ -36,5 +36,6 @@ ParametricPlot[{Cosh[t] + 2 Sinh[t], 2 Cosh[t] + Sinh[t]}, {t, -1, 1}]
 ![]("test_graphics-graphics/chunk-7-1.jpg")
 
 ```{Mathematica}
-(* Plot3D[{Cosh[x]/Sinh[y], 2 Cosh[x] Sinh[y]}, {x, -1, 1}, {y, -1, 1}] *)
+Plot3D[{Cosh[x]/Sinh[y], 2 Cosh[x] Sinh[y]}, {x, -1, 1}, {y, -1, 1}]
 ```
+![]("test_graphics-graphics/chunk-9-1.jpg")
