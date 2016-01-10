@@ -79,6 +79,12 @@ class CodeChunk(Chunk):
 
     sep = "```"
     """Delimiter that flags where code chunks begin and end."""
+
+    OPTS_INLINE = 0
+    """Inline flag."""
+
+    available_opts = [OPTS_INLINE]
+    """List of all possible chunk options."""
     
 
     def __init__(self, doc, index, text):
@@ -94,6 +100,21 @@ class CodeChunk(Chunk):
         """Whether or not this chunk will output Graphics objects. Use
         only after property code has been computed.
         """
+
+        self._options = None
+        """Internal use. See property options instead."""
+
+    @property
+    def options(self):
+        """List of options. See CodeChunk.available_opts for a list of all possible options."""
+        if self._options == None:
+            self._options = []
+
+            # inline?
+            if not re.match(r'^```{Mathematica.*?}\n', self.text):
+                self._options.append(self.OPTS_INLINE)
+
+        return self._options
 
     @property
     def code(self):
@@ -142,15 +163,30 @@ class CodeChunk(Chunk):
         """
         return "\nPrint@" + "\"" + self.chunk_header + str(index) + "\"\n"
 
-    def process_output(self, output):
+    def process_output(self, out):
+        """Returns the correct output after applying this chunk's options. <out> must be the
+        raw output text from MathKernel."""
+        output = out
+
+        # handle graphics options and links
         if self.has_graphics:
-            return re.sub(self.link_regex, r'![]("\1")', "\n" + output.strip())
+            output = re.sub(self.link_regex, r'![]("\1")', "\n" + output.strip())
+            output = self.text + output
+            
+        # handle inline option
+        elif self.OPTS_INLINE in self.options:
+            output = out.strip()
+
+        # default case
         else:
             if re.match(r'^\s*$', output):
-                return self.sep + "\n" + self.sep
+                output = self.sep + "\n" + self.sep
             else:
-                return "\n\n" + self.sep + "\n" + output.strip() + "\n" + self.sep
+                output = "\n\n" + self.sep + "\n" + output.strip() + "\n" + self.sep
 
+            output = self.text + output
+
+        return output
 
     
 ####################
@@ -254,22 +290,17 @@ class Document:
         return out_chunks
 
     def weave_output(self, outputs):
-        """Pastes output chunks immediately after the corresponding input
-        chunk. Returns one string containing both input and output.
-        @param outputs: output from all code chunks.
-        """
+        """Places output chunks where they correspond."""
         chunks = [c.text for c in self.chunks]
 
-        # Iterate through bouth lists adding an output chunk after the corresponding code
-        # chunk. 
+        # replace each code chunk with the result from CodeChunk.process_output()
         i = 0
         j = 0
-        while j < len(chunks):
-            if self._is_code_chunk(chunks[j]):
-                chunks[j] = chunks[j]
-                chunks.insert(j + 1, outputs[i])
-                i += 1
-            j += 1
+        while i < len(chunks):
+            if self._is_code_chunk(chunks[i]):
+                chunks[i] = outputs[j]
+                j += 1
+            i += 1
     
         return "".join(chunks)
 

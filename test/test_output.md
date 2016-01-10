@@ -48,3 +48,5 @@ and more complicated expressions
 ```
 (2*(x^2*(-1 + x^3) + (-1)^(2/3)*3^(3/4)*Sqrt[(-1)^(5/6)*(-1 + x)]*Sqrt[1 + x + x^2]*(Sqrt[3]*EllipticE[ArcSin[Sqrt[-(-1)^(5/6) - I*x]/3^(1/4)], (-1)^(1/3)] + (-1)^(5/6)*EllipticF[ArcSin[Sqrt[-(-1)^(5/6) - I*x]/3^(1/4)], (-1)^(1/3)])))/(7*Sqrt[-1 + x^3])
 ```
+
+Also, we test inline output: two plus two equals 4.
