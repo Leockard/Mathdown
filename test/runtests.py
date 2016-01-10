@@ -9,7 +9,8 @@ if __name__ == "__main__":
 
     # test every .Mmd in this directory
     tests = [fl for fl in os.listdir(os.getcwd()) if re.match(".*\.Mmd", fl)]
-
+    passed = 0
+    
     for test in tests:
         # run test
         print("Testing " + test + "...")
@@ -23,6 +24,9 @@ if __name__ == "__main__":
         md_file = test.split(".")[0] + ".md"
         target = test.split(".")[0] + "_target.md"
         diff = call(["diff", md_file, target])
-        print((not diff) and "Pass." or "FAIL.")
 
-    
+        passed += not diff
+        print((not diff) and "Pass." or "FAIL.")
+        print("")
+
+    print("Done. (" + str(passed) + "/" + str(len(tests)) + ")")

@@ -1,187 +1,16 @@
-# main.py
+# mathdown.py
 # Convert a .Mmd file into regular Markdown.
+
 
 import re
 
-code_flag_begin = "{Mathematica"
-chunk_header = "Mmd-chunk-begin-id-"
-NCHUNKS = 0
-SEP = "```"
-GRAPHICS_DIR = "figures"
-FIGURES_DIR_EXISTS = False
 
-
-#######################
-### AUXILIARY FUNCTIONS
-#######################
-
-def is_code_chunk(chunk):
-    """Returns whether or not <chunk> is flagged as code.
-    @param chunk: a string
-    """
-    return chunk.find(code_flag_begin) == 0
-
-def remove_chunk_header(chunk):
-    """Removes the {Mathematica opts...} header from each chunk."""
-    return "\n".join(chunk.split("\n")[1:])
-
-def make_chunk_header(c):
-    """Returns an appropriate code chunk header that will be embedded in the input code so
-    that we can trace what output came from where.
-    """
-    global NCHUNKS
-    NCHUNKS += 1
-    return "\nPrint@" + "\"" + chunk_header + str(NCHUNKS) + "\"\n"
-
-def make_out_name(in_name):
-    """Returns an appropriate output file name from the input file name.
-    @param in_name: string.
-    """
-    name, ext = input_name.split(".")[:2]
-    return name + "." + ext[1:]
-
-def create_figures_dir(title):
-    """Checks if the figures dir is already created. If it isn't, create it and return
-    True. If it is, immedately return True. Only returns False when creating the directory
-    causes an error.
-    """
-    global FIGURES_DIR_EXISTS
-    if FIGURES_DIR_EXISTS:
-        return True
-    
-    import os
-    figs_dir = os.getcwd() + "/" + title + "-" + GRAPHICS_DIR
-    try:
-        if not os.path.exists(figs_dir):
-            os.makedirs(figs_dir)
-            FIGURES_DIR_EXISTS = True
-            return True
-        else:
-            FIGURES_DIR_EXISTS = True
-            return True
-    except OSError:
-        return False
-
-def make_image_link(filename):
-    """Returns the Markdown code that embeds the image <filename>."""
-    return "![](" + filename + ")"
-
-def is_link(exp):
-    """Returns True if the expression is a Markdown link, i.e., if it begins with a !"""
-    return exp.strip().find("!") == 0
-
-
-##################################
-### OUTPUT CHUNK PARSING FUNCTIONS
-##################################
-
-def parse_raw_output(out):
-    """Processes the output of running all code chunks together. Returns a list of strings,
-    one with the ouput of each chunk.
-    @param out: the raw output returned by executing the code in WolframKernel.
-    """
-    out_chunks = re.split("\"" + chunk_header + ".*\"", out)
-    out_chunks = list(filter(None, out_chunks))
-
-    return out_chunks
-
-def pretty_up_output(out):
-    """Processes the output chunk list into a suitable format for embedding into the .md file.
-    @param out: output chunk list.
-    """
-    # the "\n" at the beginning is essential since we will then remove empty code chunks
-    # i.e., we need the input and ouptut chunks to be separated by at least one empty line
-    return [is_link(o) and o or ("\n\n" + SEP + o + SEP) for o in out]
-
-def weave_output(chunks, outputs):
-    """Pastes output chunks immediately after the corresponding input
-    chunk. Returns one string containing both input and output.
-    @param chunks: all chunks (text and code).
-    @param outputs: output chunks.
-    """
-    i = 0
-    j = 0
-    while j < len(chunks):
-        if is_code_chunk(chunks[j]):
-            chunks[j] = SEP + chunks[j] + SEP
-            chunks.insert(j + 1, outputs[i])
-            i += 1
-        j += 1
-
-    return "".join(chunks)
-
-def get_graphics(output):
-    """Returns a list of Graphics[] expressions found in output.
-    @param output: output string.
-    """
-    # if we do
-    #     re.findall("(Graphics\[.*])", output)
-    # directly over output, we would have to assume that WolframKernel outputs each Graphics[]
-    # on a single line (no newline) and that it separates multiple Graphics[] by at least one
-    # newline. To avoid that assumption, we add a newline in front of each Graphics[]
-    with_newlines = output.replace("Graphics[", "\nGraphics[")
-    return re.findall("(Graphics\[.*])", with_newlines)
-
-def process_all_graphics(outputs, title):
-    """Looks for Graphics[] expressions inside each output chunk and replaces them with an
-    embedded image.
-    @param outputs: list of output chunks.
-    """
-    return [process_graphics(outputs[i], title, "chunk-" + str(i)) for i in range(len(outputs))]
-
-def process_graphics(output, title, fileprefix, ext="jpg"):
-    """Processes Graphics[] objects in one output chunk. Calls Export["fileprefix_i.ext",
-    graphics], where graphics is extracted from the output chunk and i is an integer
-    denoting the order in which the graphics object appears in the output.
-    @param output: output string.
-    @param fileprefix: the file to save the image to.
-    """
-    def make_command(g, i):
-        return "Export[FileNameJoin[{\"" + title + "-" + GRAPHICS_DIR + "\", \"" + fileprefix + "-" + str(i) + "."+ext + "\"}], " + g + "]"
-    
-    i = 1;
-    for g in get_graphics(output):
-        # create_figures_dir() will only create the directory only the first time it's called
-        # we call it inside the loop because we only want to create the dir in case there's
-        # a graphic to export
-        figure_dir = create_figures_dir(title)
-        
-        # WE NEED ERROR HANDLING HERE!!!
-        outfile = execute_code(make_command(g, i))
-        output = output.replace(g, make_image_link(outfile.rstrip()))
-        i += 1
-
-    return output
-
-
-#################################
-### INPUT CHUNK PARSING FUNCTIONS
-#################################
-
-def parse_chunk_options(chunk):
-    """Parses options of the form {Mathematica opts...}.
-    @param chunk: a string. 
-    """
-    return []
-
-def generate_code(chunks, opts):
-    """Generates code to run from all chunks. All chunks are run at once. Correspondingly,
-    this returns one single string with all code.
-    @param chunks: a list of all code chunks. Each chunk still has the {Mathematica opts...} directive.
-    @param opts: a list of lists of parsed options, one for each chunk.
-    """
-    chunks = [remove_chunk_header(c) for c in chunks]
-    
-    code = ""
-    for c in chunks:
-        code = code + make_chunk_header(c) + c
-
-    return code
+#############################
+### MathKernel external calll
+#############################
 
 def execute_code(code):
-    """Calls WolframKernel over <code>.
-    @param code: a string containing Mathematica code.
-    """
+    """Calls WolframKernel over <code>."""
     import tempfile
     import subprocess
 
@@ -199,40 +28,306 @@ def execute_code(code):
     return output
 
 
-##################################
-### TOP LEVEL PROCESSING FUNCTIONS
-##################################
 
-def process_all_chunks(chunk_list):
-    """Processes all code chunks.
-    @param <chunk_list>: a list of strings.
-    """
-    opt_list = [parse_chunk_options(c) for c in chunk_list]
-    output_list = parse_raw_output(execute_code(generate_code(chunk_list, opt_list)))
+####################
+### Chunk class
+####################
 
-    return output_list
+class Chunk:
+    """A chunk of text within a .Mmd document."""
 
-def pretty_up_code(md):
-    """Processes the markdown and sets it up for pretty printing.
-    @param md: raw markdown.
-    """
-    # delete any empty outputs
-    md = md.replace(SEP + "\n" + SEP, "")
-    return md
+    def __init__(self, doc, index, text = ""):
+        self.text = text
+        """The text of this chunk."""
+
+        self.document = doc
+        """The Document object this chunk is part of."""
+
+        self.index = index
+        """The unique index corresponding to this Chunk within the Document."""
+
+    def process_output(self, output):
+        """Returns the formatted output. <output> must be the resulting text from
+        running the code inside this chunk (if any).
+        """
+        # Override me!
+        return output
+
+
+
+####################
+### CodeChunk class
+####################    
     
-def make_markdown(text, title=""):
-    """Converts the contents of a .Mmd file into Markdown.
-    @param text: string read from a .Mmd file.
-    @param title: string to be appended to the figures directory, if any.
+class CodeChunk(Chunk):
+    """A code chunk within a .Mmd document. <self.text> preserves the ```
+    separators and options. Use the <code> property to read the
+    executable Mathematica code form this chunk.
     """
-    chunks = mmd.split(SEP)
-    outputs = process_all_chunks([c for c in chunks if is_code_chunk(c)])
-    outputs = process_all_graphics(outputs, title)
-    outputs = pretty_up_output(outputs)
-    markdown = weave_output(chunks, outputs)
-    markdown = pretty_up_code(markdown)
 
-    return markdown
+    graphics_regex = re.compile(r"(.*?Plot|Graphics)\[(.*)\]")
+    """Regex used to determine if a particular line of Mathematica code will output a Graphics object."""
+
+    code_regex = re.compile(r"\s*```{Mathematica.*?}\s*(.*)\s*```", re.DOTALL)
+    """Regex used to determine if a particular chunk is code."""
+
+    link_regex = re.compile(r'"(.*?)"')
+    """Regex used to find graphics output when processing code."""
+
+    chunk_header = "Mmd-chunk-begin-id-"
+    """Internal use."""
+
+    sep = "```"
+    """Delimiter that flags where code chunks begin and end."""
+    
+
+    def __init__(self, doc, index, text):
+        Chunk.__init__(self, doc, index, text)
+        
+        self._header = ""
+        """Internal use. See property header instead."""
+        
+        self._code = ""
+        """Internal use. See property code instead."""
+
+        self.has_graphics = False
+        """Whether or not this chunk will output Graphics objects. Use
+        only after property code has been computed.
+        """
+
+    @property
+    def code(self):
+        """The executable Mathematica code from this chunk. If there are any lines
+        that output Graphics objects in this chunk, they will be replaced by an
+        Export[] expression. For this, the parent Document must make sure the graphics
+        directory exists before using this property.
+        """
+        if not self._code:
+            self._code = re.match(self.code_regex, self.text).group(1)
+
+            # If this chunk will output a Graphics object, replace that line with a call to Export[].
+            # In this way, all figures are automatically saved instead of displayed.
+            if re.match(self.graphics_regex, self._code):
+                self.has_graphics = True
+                self._code = re.sub(self.graphics_regex, r'Export["' + self.document.graphics_dirname + "chunk-" + str(self.index) + "<CHANGE_ME>" + ".jpg" + r'", \1[\2]]', self._code)
+
+                # We left a <CHANGE_ME> flag in place. Now, we replace it iteratively with
+                # the corresponding ordinal number. (We can't do that in a single re.sub call)
+                code = self._code
+                i = 1
+                match = re.search(r"<CHANGE_ME>", code)
+                while match:
+                    code = code[:match.start()] + "-" + str(i) + code[match.end():]
+                    match = re.search(r"<CHANGE_ME>", code)
+                    i += 1
+                self._code = code
+
+            else:
+                self.has_graphics = False
+
+        return self._code
+
+    @property
+    def header(self):
+        """The internal-use header attached to keep track of output chunks when
+        running code.
+        """
+        if not self._header:
+            self._header = self._make_chunk_header(self.text)
+        return self._header
+
+    def _make_chunk_header(self, index):
+        """Returns an appropriate code chunk header that will be embedded in the input code so
+        that we can trace what output came from where.
+        """
+        return "\nPrint@" + "\"" + self.chunk_header + str(index) + "\"\n"
+
+    def process_output(self, output):
+        if self.has_graphics:
+            return re.sub(self.link_regex, r'![]("\1")', "\n" + output.strip())
+        else:
+            if re.match(r'^\s*$', output):
+                return self.sep + "\n" + self.sep
+            else:
+                return "\n\n" + self.sep + "\n" + output.strip() + "\n" + self.sep
+
+
+    
+####################
+### Document class
+####################
+
+class Document:
+    """A .Mmd document."""
+
+    code_flag_begin = "{Mathematica"
+    """Delimiter at the beginning of every Mathematica code chunk."""
+
+    sep = "```"
+    """Delimiter that flags where code chunks begin and end."""
+
+    
+    def __init__(self, path):
+        """Creates a Document instance representing the file at <path>."""
+
+        self.path = path
+        """Note the path isn't read until a call to convert()"""
+
+        self.text = ""
+        """The full text in the file."""
+
+        self.chunks = []
+        """A list of Chunk objects of all chunks found in this document."""
+
+        self.code_chunks = []
+        """A list of CodeChunk objects of code chunks in this document."""
+
+        self.markdown = ""
+        """The Markdown text corresponding to the contents of the file."""
+
+        self._graphics_dir_exists = False
+        """Whether or not the directory exists. Internal use."""
+
+    @property
+    def filename(self):
+        """The name of the file, extracted from self.path."""
+        return self.path.split("/")[-1]
+
+    @property
+    def out_filename(self):
+        """Returns the name for the output .md file."""
+        return self.filename.split(".")[0] + ".md"
+
+    @property
+    def graphics_dirname(self):
+        """The name of the directory where all graphics go."""
+        return self.filename.split(".")[0] + "-graphics/"
+
+    def convert(self):
+        """Converts the .Mmd to .md, processing all chunks in self.chunks."""
+
+        # read from disk
+        try: 
+            with open(self.path, 'r') as f:
+                mmd = f.read()
+                self.text = mmd
+        except IOError:
+            print("No such file or directory: " + self.path + ".")
+            exit(1)
+
+        # do some magic!
+        outputs = self.run_code_chunks()
+        # outputs = [is_link(o) and o or ("\n\n" + SEP + o + SEP) for o in outputs]
+
+        # place output chunks where they're supposed to be
+        markdown = self.weave_output(outputs)
+
+        # delete any empty output chunks
+        markdown = markdown.replace(self.sep + "\n" + self.sep, "")
+
+        self.markdown = markdown
+
+    def run_code_chunks(self):
+        # Parse document and generate Chunk objects
+        self._parse_chunks()
+        
+        # Since we process all chunks in a single kernel call, we need to  we need to keep
+        # track of where each chunk starts. That's why we add c.header before any code.
+        # The trailing \n after c.code is necessary so that the kernel executes the last
+        # expression correctly
+        code = "\n".join([c.header + c.code + "\n" for c in self.chunks if isinstance(c, CodeChunk)])
+
+        # Make sure the graphics directory exists
+        if re.search(CodeChunk.graphics_regex, code):
+            self._make_graphics_dir()
+
+        # Call the kernel - this may take a while...
+        output = execute_code(code)
+        
+        # Partition the output by the added headers
+        out_chunks = re.split("\"" + CodeChunk.chunk_header + ".*\"", output)
+        out_chunks = list(filter(None, out_chunks))
+
+        # Let each chunk manage its own output
+        out_chunks = [self.code_chunks[i].process_output(out_chunks[i]) for i in range(len(out_chunks))]
+
+        return out_chunks
+
+    def weave_output(self, outputs):
+        """Pastes output chunks immediately after the corresponding input
+        chunk. Returns one string containing both input and output.
+        @param outputs: output from all code chunks.
+        """
+        chunks = [c.text for c in self.chunks]
+
+        # Iterate through bouth lists adding an output chunk after the corresponding code
+        # chunk. 
+        i = 0
+        j = 0
+        while j < len(chunks):
+            if self._is_code_chunk(chunks[j]):
+                chunks[j] = chunks[j]
+                chunks.insert(j + 1, outputs[i])
+                i += 1
+            j += 1
+    
+        return "".join(chunks)
+
+    def _make_graphics_dir(self):
+        """Checks if the graphics directory is already created. If it isn't, create
+        it and return True. If it is, immedately return True. Only returns False when
+        creating the directory causes an error.
+        """
+        if self._graphics_dir_exists:
+            return True
+
+        import os
+        figs_dir = os.getcwd() + "/" + self.graphics_dirname
+        try:
+            if not os.path.exists(figs_dir):
+                os.makedirs(figs_dir)
+                self._graphics_dir_exists = True
+                return True
+            else:
+                self._graphics_dir_exists = True
+                return True
+        except OSError:
+            return False
+
+    def _parse_chunks(self):
+        """Parse the file and create Chunk objects, stored in self.chunks."""
+        regex = re.compile(r'(```.*?```)', re.DOTALL)
+        text_chunks = re.split(regex, self.text)
+
+        self.chunks = []
+        self.code_chunks = []
+
+        index = 0
+        for t in text_chunks:
+            if self._is_code_chunk(t):
+                c = CodeChunk(self, index, t)
+                self.code_chunks.append(c)
+            else:
+                c = Chunk(self, index, t)
+                
+            index +=1
+            self.chunks.append(c)
+
+    def _is_code_chunk(self, text):
+        """Returns whether or not <chunk> is flagged as code."""
+        return text.find(self.code_flag_begin) == len(self.sep)
+
+    def write_md(self):
+        """Writes markdown to output file."""
+
+        # boilerplate file writing
+        try: 
+            with open(self.out_filename, 'w') as f:
+                f.write(self.markdown)
+        except IOError:
+            print("Couldn't create file: " + self.out_filename + ".")
+            exit(1)
+
 
 
 ##################################
@@ -241,31 +336,13 @@ def make_markdown(text, title=""):
 
 if __name__ == "__main__":
     from sys import argv
-
-    # check for necessary file name
+    
     if len(argv) < 2:
         print("A .Mmd file is needed.")
         exit(1)
 
-    # boilerplate file opening
-    input_name = argv[1]
-    try: 
-        with open(input_name, 'r') as f:
-            mmd = f.read()
-    except IOError:
-        print("No such file or directory: " + input_name)
-        exit(1)
-
-    # make magic!
-    output_name = make_out_name(input_name)
-    markdown = make_markdown(mmd, input_name.split(".")[0])
-
-    # boilerplate file writing
-    try: 
-        with open(output_name, 'w') as f:
-            f.write(markdown)
-    except IOError:
-        print("Couldn't create file: " + output_name)
-        exit(1)
-
+    doc = Document(argv[1])
+    doc.convert()
+    doc.write_md()
+        
     exit(0)
