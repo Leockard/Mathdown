@@ -3,13 +3,15 @@
 This chunk tests some basic Markdown features as well as Mathematica numeric outputs.
 Implicitly, we're also testing for correct whitespace.
 
-Such as integers and lists,
+Such as text, integers and lists,
 
 ```{Mathematica}
+Print["This is a test."]
 Range[10]
 ```
 
 ```
+"This is a test."
 {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 ```
 

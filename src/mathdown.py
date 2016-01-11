@@ -180,11 +180,6 @@ class CodeChunk(Chunk):
 
             output = self.text + output
 
-        print("text: ", self.text)
-        print("code: ", self.code)
-        print("raw : ", out)
-        print("out : ", out)
-
         return output
 
     
@@ -278,8 +273,6 @@ class Document:
 
         # Call the kernel - this may take a while...
         output = execute_code(code)
-
-        print(output)
 
         # Partition the output by the added headers
         out_chunks = re.split("\"" + CodeChunk.chunk_header + ".*\"", output)
