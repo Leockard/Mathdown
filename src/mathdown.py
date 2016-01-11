@@ -75,7 +75,7 @@ class CodeChunk(Chunk):
     """Regex used to find graphics output when processing code."""
 
     chunk_header = "Mmd-chunk-begin-id-"
-    """Internal use."""
+    """Internal use. Use property header."""
 
     sep = "```"
     """Delimiter that flags where code chunks begin and end."""
@@ -154,14 +154,8 @@ class CodeChunk(Chunk):
         running code.
         """
         if not self._header:
-            self._header = self._make_chunk_header(self.text)
+            self._header = "\nPrint@" + "\"" + self.chunk_header + str(self.index) + "\"\n"
         return self._header
-
-    def _make_chunk_header(self, index):
-        """Returns an appropriate code chunk header that will be embedded in the input code so
-        that we can trace what output came from where.
-        """
-        return "\nPrint@" + "\"" + self.chunk_header + str(index) + "\"\n"
 
     def process_output(self, out):
         """Returns the correct output after applying this chunk's options. <out> must be the
@@ -185,6 +179,11 @@ class CodeChunk(Chunk):
                 output = "\n\n" + self.sep + "\n" + output.strip() + "\n" + self.sep
 
             output = self.text + output
+
+        print("text: ", self.text)
+        print("code: ", self.code)
+        print("raw : ", out)
+        print("out : ", out)
 
         return output
 
@@ -279,7 +278,9 @@ class Document:
 
         # Call the kernel - this may take a while...
         output = execute_code(code)
-        
+
+        print(output)
+
         # Partition the output by the added headers
         out_chunks = re.split("\"" + CodeChunk.chunk_header + ".*\"", output)
         out_chunks = list(filter(None, out_chunks))

@@ -7,11 +7,11 @@ The **mathdown** script imitates the basic functionality of RMarkdown but for Ma
 
 
 ### Installation
-Clone this repo and execute mathdown.py.
+Clone this repo and execute mathdown.py, with python3.
 
 
 ### Usage
-$> python mathdown.py your_file.Mmd
+$> python3 mathdown.py your_file.Mmd
 
 Where *your_file.Mmd* is a Markdown file containing Mathematica code chunks. Each chunk
 must start with three backquotes (`) followed by the "{Mathematica}" tag on the first
@@ -20,11 +20,10 @@ line, and end with a line containing only three backquotes.
 
 ### Example
 This README.md file was generated from README.Mmd, also available in the repo.
-
 ```{Mathematica}
 Print["This is a chunk."]
 Range[10]
-var = 2;
+foo = 2;
 ```
 
 ```
@@ -32,31 +31,27 @@ var = 2;
 {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 ```
 
-
-Mathdown retains variables across chunks:
-
+Mathdown retains variables across chunks: it keeps the "foo" variable we defined previosly.
 
 ```{Mathematica}
-var
-var = 3
+foo
 ```
 
 ```
 2
-3
 ```
 
+Inline chunks are also supported. For example, we can print the value of "foo" within a
+paragraph: "foo" = 2.
 
 Mathdown calls Export[] on Graphics[] output to convert them to .jpg and save them in a
 separate folder. (Here we manually insert the image so that this README is
-complete. Locally, the figures are stored in the your_file-figures/ folder.)
-
+complete. Locally, the figures are stored in the your_file-graphics/ folder.)
 
 ```{Mathematica}
 Plot[x^var, {x, 0, 10}]
 ```
-
-![](README-figures/chunk-2-1.jpg?raw=True)
+![]("README-graphics/chunk-7-1.jpg")
 
 
 ### License
