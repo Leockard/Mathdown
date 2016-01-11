@@ -51,7 +51,8 @@ complete. Locally, the figures are stored in the your_file-graphics/ folder.)
 ```{Mathematica}
 Plot[x^foo, {x, 0, 10}]
 ```
-![]("README-graphics/chunk-7-1.jpg?raw=True")
+![](README-graphics/chunk-7-1.jpg?raw=True)
+
 
 
 ### License
